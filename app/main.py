@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 import psycopg
-# from psycopg2.extras import RealDictCursor
 import time
 from . import models
-from .database import engine
+from .database import engine, get_db
+from .routers import task, user, auth
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -26,6 +26,10 @@ while True:
         print("Connecting to database failed")
         print("Error: ", error)
         time.sleep(4)
+
+app.include_router(auth.router)
+app.include_router(user.router)
+app.include_router(task.router)
 
 
 @app.get("/")
