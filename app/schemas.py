@@ -15,7 +15,6 @@ class TaskBase(BaseModel):
     members: list = None
     notes: list = None
     documents: list = None
-    created_by: int
 
 
 class TaskCreate(TaskBase):
@@ -31,11 +30,6 @@ class UserCreate(BaseModel):
 # https: // fastapi.tiangolo.com/tutorial/sql-databases/  # __tabbed_1_3
 
 
-class Task(TaskBase):
-    class Config:
-        orm_mode = True
-
-
 class UserOut(BaseModel):
     id: int
     email: EmailStr
@@ -48,6 +42,16 @@ class UserOut(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class Task(TaskBase):
+    id: int
+    created_at: datetime
+    created_by: int = None
+    owner: UserOut
+
+    class Config:
+        orm_mode = True
 
 
 class Token(BaseModel):
