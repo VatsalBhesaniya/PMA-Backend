@@ -1,5 +1,5 @@
 from .database import Base
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import TIMESTAMP, ARRAY
 from sqlalchemy.sql.expression import text
@@ -18,7 +18,9 @@ class Task(Base):
     members = Column(ARRAY(Integer))
     notes = Column(ARRAY(Integer))
     documents = Column(ARRAY(Integer))
-    created_by = Column(Integer)
+    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
+
+    owner = relationship("User")
 
 
 class User(Base):
