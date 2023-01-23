@@ -25,3 +25,27 @@ def get_db():  # Dependency
         yield db
     finally:
         db.close()
+
+
+# if we don't want to use sqlalchemy then we can connect to the database in the following way
+# cursor_factory = RealDictCursor (from psycopg2.extras import RealDictCursor)
+# Above parameter will give the column name as well.
+# psycopg2 library does not return the column name from a query so we need to add this parameter.
+# cursor_factory = RealDictCursor
+
+# import psycopg
+# import time
+
+# while True:
+#     try:
+#         # Connect to an existing database
+#         conn = psycopg.connect(host='localhost', dbname='pma',
+#                                user='postgres', password='8460')
+#         # Open a cursor to perform database operations
+#         cursor = conn.cursor()
+#         print("Database connection was succesfull")
+#         break
+#     except Exception as error:
+#         print("Connecting to database failed")
+#         print("Error: ", error)
+#         time.sleep(4)
