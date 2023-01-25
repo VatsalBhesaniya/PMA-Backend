@@ -6,6 +6,15 @@ from typing import Optional
 # Request Models
 
 
+class ProjectBase(BaseModel):
+    title: str
+    created_at: datetime = datetime.utcnow()
+
+
+class ProjectCreate(ProjectBase):
+    pass
+
+
 class TaskBase(BaseModel):
     title: str
     description: str
@@ -42,6 +51,15 @@ class UserOut(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class ProjectOut(ProjectBase):
+    id: int
+    created_at: datetime
+    created_by: int
+
+    class Config:
+        orm_mode = True
 
 
 class Task(TaskBase):
