@@ -5,9 +5,45 @@ from sqlalchemy.sql.sqltypes import TIMESTAMP, ARRAY
 from sqlalchemy.sql.expression import text
 
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    password = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True),
+                        server_default=text('now()'), nullable=False)
+
+
+class Project(Base):
+    __tablename__ = "projects"
+    id = Column(Integer, primary_key=True, nullable=False)
+    title = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True),
+                        server_default=text('now()'), nullable=False)
+    created_by = Column(Integer, ForeignKey(
+        "users.id", ondelete="CASCADE"), nullable=False)
+
+
+class Member(Base):
+    __tablename__ = "members"
+    user_id = Column(Integer, ForeignKey(
+        "users.id", ondelete="CASCADE"), primary_key=True)
+    project_id = Column(Integer, ForeignKey(
+        "projects.id", ondelete="CASCADE"), primary_key=True)
+    role = Column(Integer, ForeignKey(
+        "roles.id", ondelete="RESTRICT"),  nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True),
+                        server_default=text('now()'), nullable=False)
+
+
+class Role(Base):
+    __tablename__ = "roles"
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
+
+
 class Task(Base):
     __tablename__ = "tasks"
-
     id = Column(Integer, primary_key=True, nullable=False)
     title = Column(String, nullable=False)
     description = Column(String)
@@ -19,14 +55,4 @@ class Task(Base):
     notes = Column(ARRAY(Integer))
     documents = Column(ARRAY(Integer))
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
-
     owner = relationship("User")
-
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, nullable=False)
-    email = Column(String, nullable=False, unique=True)
-    password = Column(String, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True),
-                        server_default=text('now()'), nullable=False)
