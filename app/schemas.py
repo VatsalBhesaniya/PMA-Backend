@@ -6,6 +6,11 @@ from typing import Optional
 # Request Models
 
 
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class ProjectBase(BaseModel):
     title: str
     created_at: datetime = datetime.utcnow()
@@ -30,10 +35,28 @@ class TaskCreate(TaskBase):
     pass
 
 
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
+class NoteBase(BaseModel):
+    title: str
+    description: str
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = None
+    last_updated_by: int = None
 
+
+class NoteCreate(NoteBase):
+    pass
+
+
+class DocumentBase(BaseModel):
+    title: str
+    content: str
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = None
+    last_updated_by: int = None
+
+
+class DocumentCreate(DocumentBase):
+    pass
 
 # Response Models
 # https: // fastapi.tiangolo.com/tutorial/sql-databases/  # __tabbed_1_3
@@ -51,6 +74,15 @@ class UserOut(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    id: Optional[str] = None
 
 
 class ProjectOut(ProjectBase):
@@ -72,10 +104,17 @@ class Task(TaskBase):
         orm_mode = True
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class Note(NoteBase):
+    id: int
+    created_by: int = None
+
+    class Config:
+        orm_mode = True
 
 
-class TokenData(BaseModel):
-    id: Optional[str] = None
+class Document(DocumentBase):
+    id: int
+    created_by: int = None
+
+    class Config:
+        orm_mode = True
