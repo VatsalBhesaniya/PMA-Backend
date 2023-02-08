@@ -15,7 +15,7 @@ def get_project(id: int, db: Session = Depends(get_db), current_user: int = Depe
     project = db.query(models.Project).filter(models.Project.id == id).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"post with id: {id} was not found")
+                            detail=f"Project with id: {id} was not found")
     # if the user is not the one who created the project
     if project.created_by != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
@@ -51,7 +51,7 @@ def delete_project(id: int, db: Session = Depends(get_db), current_user: int = D
     # if project does not exist
     if project == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"post with id: {id} does not exist")
+                            detail=f"Project with id: {id} does not exist")
     # if the user is not the one who created the project
     if project.created_by != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
@@ -68,7 +68,7 @@ def update_project(id: int, project: schemas.ProjectCreate, db: Session = Depend
     # if project does not exist
     if updated_project == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"post with id: {id} does not exist")
+                            detail=f"Project with id: {id} does not exist")
     # if the user is not the one who created the project
     if updated_project.created_by != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,

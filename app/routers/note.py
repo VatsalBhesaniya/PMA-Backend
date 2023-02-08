@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import Response, status, HTTPException, Depends, APIRouter
+from fastapi import Query, Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 from .. import models, schemas, oauth2
 from ..database import engine, get_db
@@ -8,6 +8,12 @@ router = APIRouter(
     prefix="/notes",
     tags=['Notes']
 )
+
+
+@router.get("/attached", response_model=List[schemas.Note])
+def get_attached_notes(noteId: list[int] = Query(default=[]), db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    notes = db.query(models.Note).filter(models.Note.id.in_(noteId)).all()
+    return notes
 
 
 @router.get("/{id}", response_model=schemas.Note)

@@ -15,17 +15,32 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
     task = db.query(models.Task).filter(models.Task.id == id).first()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"post with id: {id} was not found")
+                            detail=f"Task with id: {id} was not found")
     # if the user is not the one who created the task
     if task.created_by != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail=f"Not authorized to perform requested action")
+    # fetch notes
+    notes = db.query(models.TaskNote).filter(
+        models.TaskNote.task_id == id).all()
+    task.notes = []
+    for note in notes:
+        task.notes.append(note.note_id)
+
+    # fetch documents
+    documents = db.query(models.TaskDocument).filter(
+        models.TaskDocument.task_id == id).all()
+    task.documents = []
+    for document in documents:
+        task.documents.append(document.document_id)
+
+    task.members = []
     return task
     # cursor.execute("""SELECT * FROM tasks WHERE id = %s """, [str(id)])
     # task = cursor.fetchone()
     # if not task:
     #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-    #                         detail=f"post with id: {id} was not found")
+    #                         detail=f"Task with id: {id} was not found")
     # return {"task_detail": task}
 
 
@@ -63,7 +78,7 @@ def delete_task(id: int, db: Session = Depends(get_db), current_user: int = Depe
     # if task does not exist
     if task == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"post with id: {id} does not exist")
+                            detail=f"Task with id: {id} does not exist")
     # if the user is not the one who created the task
     if task.created_by != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
@@ -77,7 +92,7 @@ def delete_task(id: int, db: Session = Depends(get_db), current_user: int = Depe
     # conn.commit()
     # if deleted_task == None:
     #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-    #                         detail=f"post with id: {id} does not exist")
+    #                         detail=f"Task with id: {id} does not exist")
     # return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -88,7 +103,7 @@ def update_task(id: int, task: schemas.TaskCreate, db: Session = Depends(get_db)
     # if task does not exist
     if updated_task == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"post with id: {id} does not exist")
+                            detail=f"Task with id: {id} does not exist")
     # if the user is not the one who created the task
     if updated_task.created_by != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
@@ -103,5 +118,75 @@ def update_task(id: int, task: schemas.TaskCreate, db: Session = Depends(get_db)
     # conn.commit()
     # if updated_task == None:
     #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-    #                         detail=f"post with id: {id} does not exist")
+    #                         detail=f"Task with id: {id} does not exist")
     # return {'data': updated_task}
+
+
+@router.post("/attach/notes", response_model=schemas.TaskNoteBase)
+def attach_notes(tasknote: schemas.TaskNoteBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    # check if task exists
+    task = db.query(models.Task).filter(
+        models.Task.id == tasknote.task_id).first()
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Task with id: {tasknote.task_id} was not found")
+    # check if note exists
+    note = db.query(models.Note).filter(
+        models.Note.id == tasknote.note_id).first()
+    if not note:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Note with id: {tasknote.note_id} was not found")
+    new_tasknote = models.TaskNote(**tasknote.dict())
+    db.add(new_tasknote)
+    db.commit()
+    db.refresh(new_tasknote)
+    return new_tasknote
+
+
+@router.delete("/attach/notes", status_code=status.HTTP_204_NO_CONTENT)
+def remove_notes(tasknote: schemas.TaskNoteBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    tasknote_query = db.query(models.TaskNote).filter(models.TaskNote.task_id ==
+                                                      tasknote.task_id and models.TaskNote.note_id == tasknote.note_id)
+    attached_note = tasknote_query.first()
+    # if relationship does not exist
+    if attached_note == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Record does not exist")
+    tasknote_query.delete(synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/attach/documents", response_model=schemas.TaskDocumentBase)
+def attach_documents(taskdocument: schemas.TaskDocumentBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    # check if task exists
+    task = db.query(models.Task).filter(
+        models.Task.id == taskdocument.task_id).first()
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Task with id: {taskdocument.task_id} was not found")
+    # check if document exists
+    document = db.query(models.Document).filter(
+        models.Document.id == taskdocument.document_id).first()
+    if not document:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Document with id: {taskdocument.document_id} was not found")
+    new_taskdocument = models.TaskDocument(**taskdocument.dict())
+    db.add(new_taskdocument)
+    db.commit()
+    db.refresh(new_taskdocument)
+    return new_taskdocument
+
+
+@router.delete("/attach/documents", status_code=status.HTTP_204_NO_CONTENT)
+def remove_documents(taskdocument: schemas.TaskDocumentBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    taskdocument_query = db.query(models.TaskDocument).filter(models.TaskDocument.task_id ==
+                                                              taskdocument.task_id and models.TaskDocument.document_id == taskdocument.document_id)
+    attached_document = taskdocument_query.first()
+    # if relationship does not exist
+    if attached_document == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Record does not exist")
+    taskdocument_query.delete(synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

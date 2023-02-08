@@ -94,5 +94,5 @@ class TaskDocument(Base):
     __tablename__ = "taskdocuments"
     task_id = Column(Integer, ForeignKey(
         "tasks.id", ondelete="CASCADE"), primary_key=True)
-    documents_id = Column(Integer, ForeignKey(
+    document_id = Column(Integer, ForeignKey(
         "documents.id", ondelete="CASCADE"), primary_key=True)

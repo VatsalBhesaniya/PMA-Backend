@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import Response, status, HTTPException, Depends, APIRouter
+from fastapi import Query, Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 from .. import models, schemas, oauth2
 from ..database import engine, get_db
@@ -8,6 +8,13 @@ router = APIRouter(
     prefix="/documents",
     tags=['Documents']
 )
+
+
+@router.get("/attached", response_model=List[schemas.Document])
+def get_attached_documents(documentId: list[int] = Query(default=[]), db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    documents = db.query(models.Document).filter(
+        models.Document.id.in_(documentId)).all()
+    return documents
 
 
 @router.get("/{id}", response_model=schemas.Document)
