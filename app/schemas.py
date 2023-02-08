@@ -26,13 +26,29 @@ class TaskBase(BaseModel):
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = None
     last_updated_by: int = None
-    members: list = None
-    notes: list = None
-    documents: list = None
+    members: list = []
+    notes: list = []
+    documents: list = []
 
 
 class TaskCreate(TaskBase):
     pass
+
+
+class TaskNoteBase(BaseModel):
+    task_id: int
+    note_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class TaskDocumentBase(BaseModel):
+    task_id: int
+    document_id: int
+
+    class Config:
+        orm_mode = True
 
 
 class NoteBase(BaseModel):
