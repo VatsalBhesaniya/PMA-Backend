@@ -53,7 +53,8 @@ class TaskDocumentBase(BaseModel):
 
 class NoteBase(BaseModel):
     title: str
-    description: str
+    content: list = None
+    content_plain_text: str = None
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = None
     last_updated_by: int = None
@@ -122,7 +123,9 @@ class Task(TaskBase):
 
 class Note(NoteBase):
     id: int
-    created_by: int = None
+    created_by: int
+    created_by_user: UserOut
+    last_updated_by_user: UserOut = None
 
     class Config:
         orm_mode = True
