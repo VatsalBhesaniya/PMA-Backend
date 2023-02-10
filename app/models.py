@@ -1,5 +1,5 @@
 from .database import Base
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import JSON, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import TIMESTAMP, ARRAY
 from sqlalchemy.sql.expression import text
@@ -62,7 +62,8 @@ class Note(Base):
     __tablename__ = "notes"
     id = Column(Integer, primary_key=True, nullable=False)
     title = Column(String, nullable=False)
-    description = Column(String)
+    content = Column(ARRAY(JSON))
+    content_plain_text = Column(String)
     created_at = Column(TIMESTAMP(timezone=True),
                         server_default=text('now()'), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True))
