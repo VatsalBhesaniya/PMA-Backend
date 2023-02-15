@@ -83,7 +83,8 @@ class Document(Base):
     __tablename__ = "documents"
     id = Column(Integer, primary_key=True, nullable=False)
     title = Column(String, nullable=False)
-    content = Column(String)
+    content = Column(ARRAY(JSON))
+    content_plain_text = Column(String)
     created_at = Column(TIMESTAMP(timezone=True),
                         server_default=text('now()'), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True))
