@@ -14,6 +14,12 @@ router = APIRouter(
 @router.get("/attached", response_model=List[schemas.Note])
 def get_attached_notes(noteId: list[int] = Query(default=[]), db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     notes = db.query(models.Note).filter(models.Note.id.in_(noteId)).all()
+    for note in notes:
+        note.created_by_user = db.query(models.User).filter(
+            models.User.id == note.created_by).first()
+        if note.last_updated_by is not None:
+            note.last_updated_by_user = db.query(models.User).filter(
+                models.User.id == note.last_updated_by).first()
     return notes
 
 
