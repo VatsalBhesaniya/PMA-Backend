@@ -55,7 +55,7 @@ def get_notes(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
     return notes
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Note)
+@router.post("/create", status_code=status.HTTP_201_CREATED, response_model=schemas.Note)
 def create_notes(note: schemas.NoteCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_note = models.Note(created_by=current_user.id, **note.dict())
     db.add(new_note)
