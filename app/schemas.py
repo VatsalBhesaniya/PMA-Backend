@@ -22,7 +22,8 @@ class ProjectCreate(ProjectBase):
 
 class TaskBase(BaseModel):
     title: str
-    description: str
+    description: list = None
+    description_plain_text: str = None
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = None
     last_updated_by: int = None

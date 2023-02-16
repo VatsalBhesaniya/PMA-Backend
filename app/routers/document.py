@@ -57,7 +57,7 @@ def get_documents(db: Session = Depends(get_db), current_user: int = Depends(oau
     return documents
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Document)
+@router.post("/create", status_code=status.HTTP_201_CREATED, response_model=schemas.Document)
 def create_documents(document: schemas.DocumentCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_document = models.Document(
         created_by=current_user.id, **document.dict())

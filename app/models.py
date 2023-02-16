@@ -46,7 +46,8 @@ class Task(Base):
     __tablename__ = "tasks"
     id = Column(Integer, primary_key=True, nullable=False)
     title = Column(String, nullable=False)
-    description = Column(String)
+    description = Column(ARRAY(JSON))
+    description_plain_text = Column(String)
     created_at = Column(TIMESTAMP(timezone=True),
                         server_default=text('now()'), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True))

@@ -57,7 +57,7 @@ def get_tasks(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
     # return {"data": tasks}
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Task)
+@router.post("/create", status_code=status.HTTP_201_CREATED, response_model=schemas.Task)
 def create_tasks(task: schemas.TaskCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_task = models.Task(created_by=current_user.id, **task.dict())
     db.add(new_task)
