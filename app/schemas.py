@@ -20,6 +20,16 @@ class ProjectCreate(ProjectBase):
     pass
 
 
+class MemberBase(BaseModel):
+    user_id: int
+    project_id: int
+    role: int
+    created_at: datetime = datetime.utcnow()
+
+    class Config:
+        orm_mode = True
+
+
 class TaskBase(BaseModel):
     title: str
     description: list = None
@@ -90,6 +100,13 @@ class UserOut(BaseModel):
         orm_mode = True
 
 
+class MemberOut(MemberBase):
+    user: UserOut
+
+    class Config:
+        orm_mode = True
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
@@ -108,6 +125,16 @@ class ProjectOut(ProjectBase):
     id: int
     created_at: datetime
     created_by: int
+
+    class Config:
+        orm_mode = True
+
+
+class ProjectDetailOut(ProjectBase):
+    id: int
+    created_at: datetime
+    created_by: int
+    members: list[MemberOut]
 
     class Config:
         orm_mode = True
