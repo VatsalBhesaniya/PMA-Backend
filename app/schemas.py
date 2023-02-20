@@ -100,6 +100,23 @@ class UserOut(BaseModel):
         orm_mode = True
 
 
+class UsersOut(BaseModel):
+    username: str
+    email: EmailStr
+
+    class Config:
+        orm_mode = True
+
+
+class SearchUsersOut(BaseModel):
+    id: int
+    username: str
+    email: EmailStr
+
+    class Config:
+        orm_mode = True
+
+
 class MemberOut(MemberBase):
     user: UserOut
 
