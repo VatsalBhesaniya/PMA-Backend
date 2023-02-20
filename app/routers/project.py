@@ -23,6 +23,35 @@ def get_project(id: int, db: Session = Depends(get_db), current_user: int = Depe
     return project
 
 
+@router.get("/detail/{id}", response_model=schemas.ProjectDetailOut)
+def get_project_detail(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    project = db.query(models.Project).filter(models.Project.id == id).first()
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Project with id: {id} was not found")
+    # if the user is not the one who created the project
+    if project.created_by != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f"Not authorized to perform requested action")
+
+    members = db.query(models.Member).filter(
+        models.Member.project_id == project.id).all()
+    project.members = []
+    for member in members:
+        user = db.query(models.User).filter(
+            models.User.id == member.user_id).first()
+        memberOut = schemas.MemberOut(
+            user_id=member.user_id,
+            project_id=member.project_id,
+            role=member.role,
+            created_at=member.created_at,
+            user=schemas.UserOut(id=user.id, email=user.email,
+                                 created_at=user.created_at),
+        )
+        project.members.append(memberOut)
+    return project
+
+
 @router.get("/", response_model=List[schemas.ProjectOut])
 def get_projects(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     projects = db.query(models.Project).filter(
