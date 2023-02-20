@@ -45,6 +45,7 @@ def get_project_detail(id: int, db: Session = Depends(get_db), current_user: int
             project_id=member.project_id,
             role=member.role,
             created_at=member.created_at,
+            status=member.status,
             user=schemas.UserOut(id=user.id, email=user.email,
                                  created_at=user.created_at),
         )
@@ -67,7 +68,7 @@ def create_projects(project: schemas.ProjectCreate, db: Session = Depends(get_db
     db.refresh(new_project)
     role = db.get(models.Role, 1)
     new_member = models.Member(user_id=current_user.id,
-                               project_id=new_project.id, role=role.id)
+                               project_id=new_project.id, role=role.id, status=1)
     db.add(new_member)
     db.commit()
     return new_project
