@@ -37,6 +37,14 @@ class Member(Base):
         "roles.id", ondelete="RESTRICT"),  nullable=False)
     created_at = Column(TIMESTAMP(timezone=True),
                         server_default=text('now()'), nullable=False)
+    status = Column(Integer, ForeignKey(
+        "member_status.id", ondelete="RESTRICT"),  nullable=False)
+
+
+class MemberStatus(Base):
+    __tablename__ = "member_status"
+    id = Column(Integer, primary_key=True, nullable=False)
+    status = Column(String, nullable=False)
 
 
 class Role(Base):
