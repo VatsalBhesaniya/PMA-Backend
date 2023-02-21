@@ -95,6 +95,9 @@ class DocumentCreate(DocumentBase):
 class UserOut(BaseModel):
     id: int
     email: EmailStr
+    username: str
+    first_name: str
+    last_name: str
     created_at: datetime
 
     class Config:
