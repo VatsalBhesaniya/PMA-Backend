@@ -46,8 +46,8 @@ def get_project_detail(id: int, db: Session = Depends(get_db), current_user: int
             role=member.role,
             created_at=member.created_at,
             status=member.status,
-            user=schemas.UserOut(id=user.id, email=user.email,
-                                 created_at=user.created_at),
+            user=schemas.UserOut(id=user.id, email=user.email, username=user.username, first_name=user.first_name,
+                                 last_name=user.last_name, created_at=user.created_at),
         )
         project.members.append(memberOut)
     return project
@@ -60,7 +60,7 @@ def get_projects(db: Session = Depends(get_db), current_user: int = Depends(oaut
     return projects
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.ProjectOut)
+@router.post("/create", status_code=status.HTTP_201_CREATED, response_model=schemas.ProjectOut)
 def create_projects(project: schemas.ProjectCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_project = models.Project(created_by=current_user.id, **project.dict())
     db.add(new_project)
