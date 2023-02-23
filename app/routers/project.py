@@ -10,16 +10,24 @@ router = APIRouter(
 )
 
 
+@router.get("/invited", response_model=List[schemas.ProjectOut])
+def get_projects_invited(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+    members = db.query(models.Member).filter(
+        (models.Member.user_id == current_user.id) & (models.Member.role != 1)).all()
+    projects = []
+    for member in members:
+        project = db.query(models.Project).filter(
+            models.Project.id == member.project_id).first()
+        projects.append(project)
+    return projects
+
+
 @router.get("/{id}", response_model=schemas.ProjectOut)
 def get_project(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     project = db.query(models.Project).filter(models.Project.id == id).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Project with id: {id} was not found")
-    # if the user is not the one who created the project
-    if project.created_by != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"Not authorized to perform requested action")
     return project
 
 
@@ -29,11 +37,6 @@ def get_project_detail(id: int, db: Session = Depends(get_db), current_user: int
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Project with id: {id} was not found")
-    # if the user is not the one who created the project
-    if project.created_by != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"Not authorized to perform requested action")
-
     members = db.query(models.Member).filter(
         models.Member.project_id == project.id).all()
     project.members = []
