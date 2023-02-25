@@ -66,7 +66,15 @@ class Task(Base):
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
     updated_at = Column(TIMESTAMP(timezone=True))
     last_updated_by = Column(Integer)
+    status = Column(Integer, ForeignKey(
+        "task_status.id", ondelete="RESTRICT"),  nullable=False)
     owner = relationship("User")
+
+
+class TaskStatus(Base):
+    __tablename__ = "task_status"
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
 
 
 class Note(Base):

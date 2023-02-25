@@ -51,6 +51,7 @@ class TaskBase(BaseModel):
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = None
     last_updated_by: int = None
+    status = 1
 
 
 class TaskCreate(TaskBase):
