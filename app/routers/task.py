@@ -16,10 +16,10 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Task with id: {id} was not found")
-    # if the user is not the one who created the task
-    if task.created_by != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"Not authorized to perform requested action")
+    # # if the user is not the one who created the task
+    # if task.created_by != current_user.id:
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+    #                         detail=f"Not authorized to perform requested action")
     # fetch notes
     notes = db.query(models.TaskNote).filter(
         models.TaskNote.task_id == id).all()
@@ -44,13 +44,29 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
     # return {"task_detail": task}
 
 
-@router.get("/", response_model=List[schemas.Task])
-def get_tasks(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+@router.get("/project/{id}", response_model=List[schemas.Task])
+def get_tasks(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     # to retrieve all tasks
     # tasks = db.query(models.Task).all()
     # to retrieve all tasks of the logged in user
     tasks = db.query(models.Task).filter(
-        models.Task.created_by == current_user.id).filter(models.Task.title.contains(search)).limit(limit).offset(skip).all()
+        models.Task.project_id == id).filter(models.Task.title.contains(search)).limit(limit).offset(skip).all()
+    for task in tasks:
+        # fetch notes
+        notes = db.query(models.TaskNote).filter(
+            models.TaskNote.task_id == task.id).all()
+        task.notes = []
+        for note in notes:
+            task.notes.append(note.note_id)
+
+        # fetch documents
+        documents = db.query(models.TaskDocument).filter(
+            models.TaskDocument.task_id == task.id).all()
+        task.documents = []
+        for document in documents:
+            task.documents.append(document.document_id)
+
+        task.members = []
     return tasks
     # cursor.execute("""SELECT * FROM tasks""")
     # tasks = cursor.fetchall()
@@ -63,6 +79,23 @@ def create_tasks(task: schemas.TaskCreate, db: Session = Depends(get_db), curren
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
+
+    # fetch notes
+    notes = db.query(models.TaskNote).filter(
+        models.TaskNote.task_id == new_task.id).all()
+    new_task.notes = []
+    for note in notes:
+        new_task.notes.append(note.note_id)
+
+    # fetch documents
+    documents = db.query(models.TaskDocument).filter(
+        models.TaskDocument.task_id == new_task.id).all()
+    new_task.documents = []
+    for document in documents:
+        new_task.documents.append(document.document_id)
+
+    new_task.members = []
+
     return new_task
     # cursor.execute("""INSERT INTO tasks(title, description, created_by) VALUES(%s, %s, %s) RETURNING *""",
     #                (task.title, task.description, task.created_by))

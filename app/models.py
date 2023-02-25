@@ -56,18 +56,25 @@ class Role(Base):
 class Task(Base):
     __tablename__ = "tasks"
     id = Column(Integer, primary_key=True, nullable=False)
+    project_id = Column(Integer, ForeignKey(
+        "projects.id", ondelete="CASCADE"), nullable=False)
     title = Column(String, nullable=False)
     description = Column(ARRAY(JSON))
     description_plain_text = Column(String)
     created_at = Column(TIMESTAMP(timezone=True),
                         server_default=text('now()'), nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
     updated_at = Column(TIMESTAMP(timezone=True))
     last_updated_by = Column(Integer)
-    members = Column(ARRAY(Integer))
-    notes = Column(ARRAY(Integer))
-    documents = Column(ARRAY(Integer))
-    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
+    status = Column(Integer, ForeignKey(
+        "task_status.id", ondelete="RESTRICT"),  nullable=False)
     owner = relationship("User")
+
+
+class TaskStatus(Base):
+    __tablename__ = "task_status"
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
 
 
 class Note(Base):
