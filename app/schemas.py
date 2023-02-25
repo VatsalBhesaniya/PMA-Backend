@@ -11,6 +11,18 @@ class UserCreate(BaseModel):
     password: str
 
 
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    username: str
+    first_name: str
+    last_name: str
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
 class ProjectBase(BaseModel):
     title: str
     created_at: datetime = datetime.utcnow()
@@ -39,13 +51,22 @@ class TaskBase(BaseModel):
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = None
     last_updated_by: int = None
-    members: list = []
-    notes: list = []
-    documents: list = []
 
 
 class TaskCreate(TaskBase):
     pass
+
+
+class Task(TaskBase):
+    id: int
+    created_by: int = None
+    members: list = []
+    notes: list = []
+    documents: list = []
+    owner: UserOut
+
+    class Config:
+        orm_mode = True
 
 
 class TaskNoteBase(BaseModel):
@@ -93,18 +114,6 @@ class DocumentCreate(DocumentBase):
 # https: // fastapi.tiangolo.com/tutorial/sql-databases/  # __tabbed_1_3
 
 
-class UserOut(BaseModel):
-    id: int
-    email: EmailStr
-    username: str
-    first_name: str
-    last_name: str
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
-
-
 class SearchUsersOut(BaseModel):
     id: int
     username: str
@@ -149,17 +158,6 @@ class ProjectDetailOut(ProjectBase):
     created_at: datetime
     created_by: int
     members: list[MemberOut]
-
-    class Config:
-        orm_mode = True
-
-
-class Task(TaskBase):
-    id: int
-    project_id: int
-    created_at: datetime
-    created_by: int = None
-    owner: UserOut
 
     class Config:
         orm_mode = True

@@ -63,12 +63,9 @@ class Task(Base):
     description_plain_text = Column(String)
     created_at = Column(TIMESTAMP(timezone=True),
                         server_default=text('now()'), nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
     updated_at = Column(TIMESTAMP(timezone=True))
     last_updated_by = Column(Integer)
-    members = Column(ARRAY(Integer))
-    notes = Column(ARRAY(Integer))
-    documents = Column(ARRAY(Integer))
-    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
     owner = relationship("User")
 
 
