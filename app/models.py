@@ -56,6 +56,8 @@ class Role(Base):
 class Task(Base):
     __tablename__ = "tasks"
     id = Column(Integer, primary_key=True, nullable=False)
+    project_id = Column(Integer, ForeignKey(
+        "projects.id", ondelete="CASCADE"), nullable=False)
     title = Column(String, nullable=False)
     description = Column(ARRAY(JSON))
     description_plain_text = Column(String)

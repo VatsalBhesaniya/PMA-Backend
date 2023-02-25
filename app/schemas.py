@@ -32,6 +32,7 @@ class MemberBase(BaseModel):
 
 
 class TaskBase(BaseModel):
+    project_id: int
     title: str
     description: list = None
     description_plain_text: str = None
@@ -155,6 +156,7 @@ class ProjectDetailOut(ProjectBase):
 
 class Task(TaskBase):
     id: int
+    project_id: int
     created_at: datetime
     created_by: int = None
     owner: UserOut
