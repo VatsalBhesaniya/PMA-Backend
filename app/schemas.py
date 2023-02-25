@@ -9,6 +9,10 @@ from typing import Optional
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    username: str
+    first_name: str
+    last_name: str
+    created_at: datetime = datetime.utcnow()
 
 
 class UserOut(BaseModel):
