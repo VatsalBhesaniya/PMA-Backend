@@ -39,7 +39,8 @@ class ProjectCreate(ProjectBase):
 class MilestoneBase(BaseModel):
     project_id: int
     title: str
-    description: str
+    description: list = None
+    description_plain_text: str = None
     is_completed: bool
     completion_date: datetime
 

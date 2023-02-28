@@ -33,7 +33,8 @@ class Milestone(Base):
     project_id = Column(Integer, ForeignKey(
         "projects.id", ondelete="CASCADE"))
     title = Column(String, nullable=False)
-    description = Column(String, nullable=False)
+    description = Column(ARRAY(JSON))
+    description_plain_text = Column(String)
     is_completed = Column(Boolean, nullable=False)
     completion_date = Column(TIMESTAMP(timezone=True), nullable=False)
 
