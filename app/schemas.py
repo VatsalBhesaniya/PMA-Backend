@@ -15,6 +15,13 @@ class UserCreate(BaseModel):
     created_at: datetime = datetime.utcnow()
 
 
+class UserUpdate(BaseModel):
+    email: EmailStr
+    username: str
+    first_name: str
+    last_name: str
+
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr
