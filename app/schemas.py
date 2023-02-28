@@ -36,6 +36,26 @@ class ProjectCreate(ProjectBase):
     pass
 
 
+class MilestoneBase(BaseModel):
+    project_id: int
+    title: str
+    description: list = None
+    description_plain_text: str = None
+    is_completed: bool
+    completion_date: datetime
+
+
+class MilestoneCreate(MilestoneBase):
+    pass
+
+
+class MilestoneOut(MilestoneBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
 class MemberBase(BaseModel):
     user_id: int
     project_id: int

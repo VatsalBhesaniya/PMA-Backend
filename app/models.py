@@ -1,5 +1,5 @@
 from .database import Base
-from sqlalchemy import JSON, Column, Integer, String, ForeignKey
+from sqlalchemy import JSON, Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import TIMESTAMP, ARRAY
 from sqlalchemy.sql.expression import text
@@ -25,6 +25,18 @@ class Project(Base):
                         server_default=text('now()'), nullable=False)
     created_by = Column(Integer, ForeignKey(
         "users.id", ondelete="CASCADE"), nullable=False)
+
+
+class Milestone(Base):
+    __tablename__ = "milestones"
+    id = Column(Integer, primary_key=True, nullable=False)
+    project_id = Column(Integer, ForeignKey(
+        "projects.id", ondelete="CASCADE"))
+    title = Column(String, nullable=False)
+    description = Column(ARRAY(JSON))
+    description_plain_text = Column(String)
+    is_completed = Column(Boolean, nullable=False)
+    completion_date = Column(TIMESTAMP(timezone=True), nullable=False)
 
 
 class Member(Base):
