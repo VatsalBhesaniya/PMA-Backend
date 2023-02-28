@@ -47,7 +47,20 @@ def get_users(search: str, db: Session = Depends(get_db), current_user: int = De
     return users
 
 
-@router.delete("/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.put("/{id}", response_model=schemas.UserOut)
+def update_user(id: int, user: schemas.UserUpdate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    user_query = db.query(models.User).filter(models.User.id == id)
+    updated_user = user_query.first()
+    # if User does not exist
+    if updated_user == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"User with id: {id} does not exist")
+    user_query.update(user.dict(), synchronize_session=False)
+    db.commit()
+    return user_query.first()
+
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     user_query = db.query(models.User).filter(models.User.id == id)
     user = user_query.first()
