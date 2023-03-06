@@ -68,7 +68,6 @@ class MemberBase(BaseModel):
     project_id: int
     role: int
     created_at: datetime = datetime.utcnow()
-    status: int
 
     class Config:
         orm_mode = True

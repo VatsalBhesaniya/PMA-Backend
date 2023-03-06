@@ -48,7 +48,6 @@ def get_project_detail(id: int, db: Session = Depends(get_db), current_user: int
             project_id=member.project_id,
             role=member.role,
             created_at=member.created_at,
-            status=member.status,
             user=schemas.UserOut(id=user.id, email=user.email, username=user.username, first_name=user.first_name,
                                  last_name=user.last_name, created_at=user.created_at),
         )
