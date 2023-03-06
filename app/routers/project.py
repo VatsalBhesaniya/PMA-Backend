@@ -11,7 +11,7 @@ router = APIRouter(
 
 
 @router.get("/invited", response_model=List[schemas.ProjectOut])
-def get_projects_invited(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+def get_projects_invited(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     members = db.query(models.Member).filter(
         (models.Member.user_id == current_user.id) & (models.Member.role != 1)).all()
     projects = []
@@ -20,6 +20,20 @@ def get_projects_invited(db: Session = Depends(get_db), current_user: int = Depe
             models.Project.id == member.project_id).first()
         projects.append(project)
     return projects
+
+
+@router.get("/members/{id}", response_model=List[schemas.SearchUsersOut])
+def get_project_members(id: int, search: str, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    members = db.query(models.Member).filter(
+        models.Member.project_id == id).all()
+    users = []
+    for member in members:
+        user = db.query(models.User).filter(
+            models.User.id == member.user_id).filter(
+            models.User.username.ilike('%' + search.lower() + '%')).first()
+        if user != None:
+            users.append(user)
+    return users
 
 
 @router.get("/{id}", response_model=schemas.ProjectOut)
