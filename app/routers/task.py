@@ -20,6 +20,7 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
     # if task.created_by != current_user.id:
     #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
     #                         detail=f"Not authorized to perform requested action")
+
     # fetch notes
     notes = db.query(models.TaskNote).filter(
         models.TaskNote.task_id == id).all()
@@ -35,6 +36,23 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
         task.documents.append(document.document_id)
 
     task.members = []
+    task_members = db.query(models.TaskMember).filter(
+        models.TaskMember.task_id == id).filter(models.TaskMember.project_id == task.project_id).all()
+    for task_member in task_members:
+        member = db.query(models.Member).filter(
+            models.Member.user_id == task_member.user_id).first()
+        user = db.query(models.User).filter(
+            models.User.id == member.user_id).first()
+        memberOut = schemas.MemberOut(
+            user_id=member.user_id,
+            project_id=member.project_id,
+            role=member.role,
+            created_at=member.created_at,
+            user=schemas.UserOut(id=user.id, email=user.email, username=user.username, first_name=user.first_name,
+                                 last_name=user.last_name, created_at=user.created_at),
+        )
+        task.members.append(memberOut)
+
     return task
     # cursor.execute("""SELECT * FROM tasks WHERE id = %s """, [str(id)])
     # task = cursor.fetchone()
@@ -153,6 +171,34 @@ def update_task(id: int, task: schemas.TaskCreate, db: Session = Depends(get_db)
     #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
     #                         detail=f"Task with id: {id} does not exist")
     # return {'data': updated_task}
+
+
+@router.post("/assign/{id}", status_code=status.HTTP_200_OK)
+def assign_task(id: int, members: list[schemas.MemberBase], db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    task = db.query(models.Task).filter(models.Task.id == id).first()
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Task with id: {id} was not found")
+    for member in members:
+        assign_member = models.TaskMember(
+            task_id=id, project_id=member.project_id, user_id=member.user_id)
+        db.add(assign_member)
+        db.commit()
+    return Response(status_code=status.HTTP_200_OK)
+
+
+@router.delete("/assign/{taskId}/{projectId}/{userId}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_task_member(taskId: int, projectId: int, userId: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    task_member_query = db.query(
+        models.TaskMember).filter(models.TaskMember.task_id == taskId).filter(models.TaskMember.project_id == projectId).filter(models.TaskMember.user_id == userId)
+    task_member = task_member_query.first()
+    # if member does not exist
+    if task_member == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Task Member with id: {userId} does not exist")
+    task_member_query.delete(synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/attach/notes", response_model=schemas.TaskNoteBase)

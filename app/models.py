@@ -81,6 +81,16 @@ class TaskStatus(Base):
     name = Column(String, nullable=False)
 
 
+class TaskMember(Base):
+    __tablename__ = "task_members"
+    task_id = Column(Integer, ForeignKey(
+        "tasks.id", ondelete="CASCADE"), primary_key=True)
+    project_id = Column(Integer, ForeignKey(
+        "projects.id", ondelete="CASCADE"), primary_key=True)
+    user_id = Column(Integer, ForeignKey(
+        "users.id", ondelete="CASCADE"), primary_key=True)
+
+
 class Note(Base):
     __tablename__ = "notes"
     id = Column(Integer, primary_key=True, nullable=False)
