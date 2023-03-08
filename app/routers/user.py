@@ -22,6 +22,22 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
+@router.put("/password", status_code=status.HTTP_200_OK)
+def update_password(user: schemas.UserPasswordUpdate, db: Session = Depends(get_db)):
+    user_query = db.query(models.User).filter(models.User.email == user.email)
+    updated_user = user_query.first()
+    # if User does not exist
+    if updated_user == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"User with id: {user_query.id} does not exist")
+    # hash the password - user.password
+    hashed_password = utils.hash(user.password)
+    user.password = hashed_password
+    user_query.update(user.dict(), synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_200_OK)
+
+
 @router.get('/{id}', response_model=schemas.UserOut)
 def get_user(id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == id).first()
