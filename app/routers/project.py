@@ -84,7 +84,7 @@ def create_projects(project: schemas.ProjectCreate, db: Session = Depends(get_db
     db.refresh(new_project)
     role = db.get(models.Role, 1)
     new_member = models.Member(user_id=current_user.id,
-                               project_id=new_project.id, role=role.id, status=1)
+                               project_id=new_project.id, role=role.id)
     db.add(new_member)
     db.commit()
     return new_project
