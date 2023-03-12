@@ -38,6 +38,23 @@ def update_password(user: schemas.UserPasswordUpdate, db: Session = Depends(get_
     return Response(status_code=status.HTTP_200_OK)
 
 
+@router.get('/{project_id}', response_model=list[schemas.SearchUsersOut])
+def get_users(project_id: int, search: str, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    all_users = db.query(models.User).filter(
+        models.User.username.ilike('%' + search.lower() + '%')).all()
+    project_members = db.query(models.Member).filter(
+        models.Member.project_id == project_id).all()
+    users = []
+    for user in all_users:
+        isMember = False
+        for project_member in project_members:
+            if (project_member.user_id == user.id):
+                isMember = True
+        if not isMember:
+            users.append(user)
+    return users
+
+
 @router.get('/{id}', response_model=schemas.UserOut)
 def get_user(id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == id).first()
@@ -54,13 +71,6 @@ def get_current_user(token: str, db: Session = Depends(database.get_db)):
     token = oauth2.verify_access_token(token, credentials_exception)
     user = db.query(models.User).filter(models.User.id == token.id).first()
     return user
-
-
-@router.get('/', response_model=list[schemas.SearchUsersOut])
-def get_users(search: str, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    users = db.query(models.User).filter(
-        models.User.username.ilike('%' + search.lower() + '%')).all()
-    return users
 
 
 @router.put("/{id}", response_model=schemas.UserOut)

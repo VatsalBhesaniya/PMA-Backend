@@ -10,7 +10,7 @@ router = APIRouter(
 )
 
 
-@router.get("/{id}", response_model=schemas.Task)
+@router.get("/{id}", response_model=schemas.TaskDetail)
 def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     task = db.query(models.Task).filter(models.Task.id == id).first()
     if not task:
@@ -20,6 +20,10 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
     # if task.created_by != current_user.id:
     #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
     #                         detail=f"Not authorized to perform requested action")
+
+    current_member = db.query(models.Member).filter(
+        (models.Member.user_id == current_user.id) & (models.Member.project_id == task.project_id)).first()
+    task.current_user_role = current_member.role
 
     # fetch notes
     notes = db.query(models.TaskNote).filter(
@@ -155,8 +159,10 @@ def update_task(id: int, task: schemas.TaskCreate, db: Session = Depends(get_db)
     if updated_task == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Task with id: {id} does not exist")
-    # if the user is not the one who created the task
-    if updated_task.created_by != current_user.id:
+    # if the user is not authorized to update the task
+    member = db.query(models.Member).where(
+        (models.Member.user_id == current_user.id) & (models.Member.project_id == task.project_id)).first()
+    if (member.role == 4):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail=f"Not authorized to perform requested action")
     task_query.update(task.dict(), synchronize_session=False)
@@ -201,31 +207,34 @@ def remove_task_member(taskId: int, projectId: int, userId: int, db: Session = D
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/attach/notes", response_model=schemas.TaskNoteBase)
-def attach_notes(tasknote: schemas.TaskNoteBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    # check if task exists
-    task = db.query(models.Task).filter(
-        models.Task.id == tasknote.task_id).first()
-    if not task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Task with id: {tasknote.task_id} was not found")
-    # check if note exists
-    note = db.query(models.Note).filter(
-        models.Note.id == tasknote.note_id).first()
-    if not note:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Note with id: {tasknote.note_id} was not found")
-    new_tasknote = models.TaskNote(**tasknote.dict())
-    db.add(new_tasknote)
-    db.commit()
-    db.refresh(new_tasknote)
-    return new_tasknote
+@router.post("/attach/notes", response_model=list[schemas.TaskNoteBase])
+def attach_notes(tasknotes: list[schemas.TaskNoteBase], db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    new_tasknotes = []
+    for tasknote in tasknotes:
+        # check if task exists
+        task = db.query(models.Task).filter(
+            models.Task.id == tasknote.task_id).first()
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Task with id: {tasknote.task_id} was not found")
+        # check if note exists
+        note = db.query(models.Note).filter(
+            models.Note.id == tasknote.note_id).first()
+        if not note:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Note with id: {tasknote.note_id} was not found")
+        new_tasknote = models.TaskNote(**tasknote.dict())
+        db.add(new_tasknote)
+        db.commit()
+        db.refresh(new_tasknote)
+        new_tasknotes.append(new_tasknote)
+    return new_tasknotes
 
 
 @router.delete("/attach/notes", status_code=status.HTTP_204_NO_CONTENT)
 def remove_notes(tasknote: schemas.TaskNoteBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    tasknote_query = db.query(models.TaskNote).filter(models.TaskNote.task_id ==
-                                                      tasknote.task_id and models.TaskNote.note_id == tasknote.note_id)
+    tasknote_query = db.query(models.TaskNote).filter((models.TaskNote.task_id ==
+                                                      tasknote.task_id) & (models.TaskNote.note_id == tasknote.note_id))
     attached_note = tasknote_query.first()
     # if relationship does not exist
     if attached_note == None:
@@ -236,31 +245,35 @@ def remove_notes(tasknote: schemas.TaskNoteBase, db: Session = Depends(get_db), 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/attach/documents", response_model=schemas.TaskDocumentBase)
-def attach_documents(taskdocument: schemas.TaskDocumentBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    # check if task exists
-    task = db.query(models.Task).filter(
-        models.Task.id == taskdocument.task_id).first()
-    if not task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Task with id: {taskdocument.task_id} was not found")
-    # check if document exists
-    document = db.query(models.Document).filter(
-        models.Document.id == taskdocument.document_id).first()
-    if not document:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Document with id: {taskdocument.document_id} was not found")
-    new_taskdocument = models.TaskDocument(**taskdocument.dict())
-    db.add(new_taskdocument)
-    db.commit()
-    db.refresh(new_taskdocument)
-    return new_taskdocument
+@router.post("/attach/documents", response_model=list[schemas.TaskDocumentBase])
+def attach_documents(taskdocuments: list[schemas.TaskDocumentBase], db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    new_taskdocuments = []
+    for taskdocument in taskdocuments:
+        print(taskdocument.task_id)
+        # check if task exists
+        task = db.query(models.Task).filter(
+            models.Task.id == taskdocument.task_id).first()
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Task with id: {taskdocument.task_id} was not found")
+        # check if document exists
+        document = db.query(models.Document).filter(
+            models.Document.id == taskdocument.document_id).first()
+        if not document:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Document with id: {taskdocument.document_id} was not found")
+        new_taskdocument = models.TaskDocument(**taskdocument.dict())
+        db.add(new_taskdocument)
+        db.commit()
+        db.refresh(new_taskdocument)
+        new_taskdocuments.append(new_taskdocument)
+    return new_taskdocuments
 
 
 @router.delete("/attach/documents", status_code=status.HTTP_204_NO_CONTENT)
 def remove_documents(taskdocument: schemas.TaskDocumentBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    taskdocument_query = db.query(models.TaskDocument).filter(models.TaskDocument.task_id ==
-                                                              taskdocument.task_id and models.TaskDocument.document_id == taskdocument.document_id)
+    taskdocument_query = db.query(models.TaskDocument).filter((models.TaskDocument.task_id ==
+                                                              taskdocument.task_id) & (models.TaskDocument.document_id == taskdocument.document_id))
     attached_document = taskdocument_query.first()
     # if relationship does not exist
     if attached_document == None:

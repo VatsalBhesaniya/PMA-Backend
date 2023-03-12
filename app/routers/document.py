@@ -31,10 +31,10 @@ def get_document(id: int, db: Session = Depends(get_db), current_user: int = Dep
     if not document:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"document with id: {id} was not found")
-    # if the user is not the one who created the document
-    if document.created_by != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"Not authorized to perform requested action")
+
+    current_member = db.query(models.Member).filter(
+        (models.Member.user_id == current_user.id) & (models.Member.project_id == document.project_id)).first()
+    document.current_user_role = current_member.role
 
     document.created_by_user = db.query(models.User).filter(
         models.User.id == document.created_by).first()
@@ -44,10 +44,28 @@ def get_document(id: int, db: Session = Depends(get_db), current_user: int = Dep
     return document
 
 
-@router.get("/", response_model=List[schemas.Document])
-def get_documents(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+@router.get("/project/{task_id}/{project_id}", response_model=List[schemas.Document])
+def get_project_documents(task_id: int, project_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     documents = db.query(models.Document).filter(
-        models.Document.created_by == current_user.id).filter(models.Document.title.contains(search)).limit(limit).offset(skip).all()
+        models.Document.project_id == project_id).all()
+    project_documents = []
+    for document in documents:
+        taskdocument = db.query(models.TaskDocument).filter(
+            (models.TaskDocument.task_id == task_id) & (models.TaskDocument.document_id == document.id)).first()
+        if not taskdocument:
+            document.created_by_user = db.query(models.User).filter(
+                models.User.id == document.created_by).first()
+            if document.last_updated_by is not None:
+                document.last_updated_by_user = db.query(models.User).filter(
+                    models.User.id == document.last_updated_by).first()
+            project_documents.append(document)
+    return project_documents
+
+
+@router.get("/project/{project_id}", response_model=List[schemas.Document])
+def get_documents(project_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+    documents = db.query(models.Document).filter(
+        models.Document.project_id == project_id).filter(models.Document.title.contains(search)).limit(limit).offset(skip).all()
     for document in documents:
         document.created_by_user = db.query(models.User).filter(
             models.User.id == document.created_by).first()
@@ -80,10 +98,6 @@ def delete_document(id: int, db: Session = Depends(get_db), current_user: int = 
     if document == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"document with id: {id} does not exist")
-    # if the user is not the one who created the document
-    if document.created_by != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"Not authorized to perform requested action")
     document_query.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

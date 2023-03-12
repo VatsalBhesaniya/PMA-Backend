@@ -68,6 +68,14 @@ class MilestoneOut(MilestoneBase):
         orm_mode = True
 
 
+class MilestonesOut(BaseModel):
+    milestones: list[MilestoneOut] = []
+    current_user_role: int
+
+    class Config:
+        orm_mode = True
+
+
 class MemberBase(BaseModel):
     user_id: int
     project_id: int
@@ -105,6 +113,19 @@ class Task(TaskBase):
         orm_mode = True
 
 
+class TaskDetail(TaskBase):
+    id: int
+    created_by: int = None
+    members: list = []
+    notes: list = []
+    documents: list = []
+    owner: UserOut
+    current_user_role: int
+
+    class Config:
+        orm_mode = True
+
+
 class TaskNoteBase(BaseModel):
     task_id: int
     note_id: int
@@ -122,6 +143,7 @@ class TaskDocumentBase(BaseModel):
 
 
 class NoteBase(BaseModel):
+    project_id: int
     title: str
     content: list = None
     content_plain_text: str = None
@@ -135,6 +157,7 @@ class NoteCreate(NoteBase):
 
 
 class DocumentBase(BaseModel):
+    project_id: int
     title: str
     content: list = None
     content_plain_text: str = None
@@ -184,6 +207,7 @@ class ProjectOut(ProjectBase):
     id: int
     created_at: datetime
     created_by: int
+    current_user_role: int = None
 
     class Config:
         orm_mode = True
@@ -194,6 +218,7 @@ class ProjectDetailOut(ProjectBase):
     created_at: datetime
     created_by: int
     members: list[MemberOut]
+    current_user_role: int = None
 
     class Config:
         orm_mode = True
@@ -204,6 +229,7 @@ class Note(NoteBase):
     created_by: int
     created_by_user: UserOut
     last_updated_by_user: UserOut = None
+    current_user_role: int = None
 
     class Config:
         orm_mode = True
@@ -214,6 +240,7 @@ class Document(DocumentBase):
     created_by: int = None
     created_by_user: UserOut
     last_updated_by_user: UserOut = None
+    current_user_role: int = None
 
     class Config:
         orm_mode = True
