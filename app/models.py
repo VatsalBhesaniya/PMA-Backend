@@ -94,6 +94,8 @@ class TaskMember(Base):
 class Note(Base):
     __tablename__ = "notes"
     id = Column(Integer, primary_key=True, nullable=False)
+    project_id = Column(Integer, ForeignKey(
+        "projects.id", ondelete="CASCADE"), nullable=False)
     title = Column(String, nullable=False)
     content = Column(ARRAY(JSON))
     content_plain_text = Column(String)
@@ -115,6 +117,8 @@ class TaskNote(Base):
 class Document(Base):
     __tablename__ = "documents"
     id = Column(Integer, primary_key=True, nullable=False)
+    project_id = Column(Integer, ForeignKey(
+        "projects.id", ondelete="CASCADE"), nullable=False)
     title = Column(String, nullable=False)
     content = Column(ARRAY(JSON))
     content_plain_text = Column(String)

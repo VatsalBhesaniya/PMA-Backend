@@ -29,10 +29,10 @@ def get_note(id: int, db: Session = Depends(get_db), current_user: int = Depends
     if not note:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"note with id: {id} was not found")
-    # if the user is not the one who created the note
-    if note.created_by != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"Not authorized to perform requested action")
+
+    current_member = db.query(models.Member).filter(
+        (models.Member.user_id == current_user.id) & (models.Member.project_id == note.project_id)).first()
+    note.current_user_role = current_member.role
 
     note.created_by_user = db.query(models.User).filter(
         models.User.id == note.created_by).first()
@@ -42,10 +42,28 @@ def get_note(id: int, db: Session = Depends(get_db), current_user: int = Depends
     return note
 
 
-@router.get("/", response_model=List[schemas.Note])
-def get_notes(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+@router.get("/project/{task_id}/{project_id}", response_model=List[schemas.Note])
+def get_project_notes(task_id: int, project_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     notes = db.query(models.Note).filter(
-        models.Note.created_by == current_user.id).filter(models.Note.title.contains(search)).limit(limit).offset(skip).all()
+        models.Note.project_id == project_id).all()
+    project_notes = []
+    for note in notes:
+        tasknote = db.query(models.TaskNote).filter(
+            (models.TaskNote.task_id == task_id) & (models.TaskNote.note_id == note.id)).first()
+        if not tasknote:
+            note.created_by_user = db.query(models.User).filter(
+                models.User.id == note.created_by).first()
+            if note.last_updated_by is not None:
+                note.last_updated_by_user = db.query(models.User).filter(
+                    models.User.id == note.last_updated_by).first()
+            project_notes.append(note)
+    return project_notes
+
+
+@router.get("/project/{project_id}", response_model=List[schemas.Note])
+def get_notes(project_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+    notes = db.query(models.Note).filter(
+        models.Note.project_id == project_id).filter(models.Note.title.contains(search)).limit(limit).offset(skip).all()
     for note in notes:
         note.created_by_user = db.query(models.User).filter(
             models.User.id == note.created_by).first()
@@ -77,10 +95,6 @@ def delete_note(id: int, db: Session = Depends(get_db), current_user: int = Depe
     if note == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"note with id: {id} does not exist")
-    # if the user is not the one who created the note
-    if note.created_by != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"Not authorized to perform requested action")
     note_query.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

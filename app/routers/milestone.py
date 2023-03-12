@@ -20,11 +20,17 @@ def get_milestone(id: int, db: Session = Depends(get_db), current_user: int = De
     return milestone
 
 
-@router.get("/project/{id}", response_model=List[schemas.MilestoneOut])
+@router.get("/project/{id}", response_model=schemas.MilestonesOut)
 def get_milestones(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     milestones = db.query(models.Milestone).filter(
         (models.Milestone.project_id == id)).all()
-    return milestones
+    current_member = db.query(models.Member).filter(
+        (models.Member.user_id == current_user.id) & (models.Member.project_id == id)).first()
+    milestonesOut = schemas.MilestonesOut(
+        milestones=milestones,
+        current_user_role=current_member.role
+    )
+    return milestonesOut
 
 
 @router.post("/create", response_model=schemas.MilestoneOut)

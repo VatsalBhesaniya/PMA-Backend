@@ -22,17 +22,27 @@ def get_projects_invited(db: Session = Depends(get_db), current_user: int = Depe
     return projects
 
 
-@router.get("/members/{id}", response_model=List[schemas.SearchUsersOut])
-def get_project_members(id: int, search: str, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+@router.get("/members/{project_id}/{task_id}", response_model=List[schemas.SearchUsersOut])
+def get_project_members(project_id: int, task_id: int, search: str, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     members = db.query(models.Member).filter(
-        models.Member.project_id == id).all()
+        models.Member.project_id == project_id).all()
+
+    task_members = []
+    task_members = db.query(models.TaskMember).filter(
+        models.TaskMember.task_id == task_id).filter(models.TaskMember.project_id == project_id).all()
+
     users = []
     for member in members:
-        user = db.query(models.User).filter(
-            models.User.id == member.user_id).filter(
-            models.User.username.ilike('%' + search.lower() + '%')).first()
-        if user != None:
-            users.append(user)
+        isMember = False
+        for task_member in task_members:
+            if (task_member.user_id == member.user_id):
+                isMember = True
+        if not isMember:
+            user = db.query(models.User).filter(
+                models.User.id == member.user_id).filter(
+                models.User.username.ilike('%' + search.lower() + '%')).first()
+            if user != None:
+                users.append(user)
     return users
 
 
@@ -42,6 +52,9 @@ def get_project(id: int, db: Session = Depends(get_db), current_user: int = Depe
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Project with id: {id} was not found")
+    current_member = db.query(models.Member).filter(
+        (models.Member.user_id == current_user.id) & (models.Member.project_id == id)).first()
+    project.current_user_role = current_member.role
     return project
 
 
@@ -53,6 +66,9 @@ def get_project_detail(id: int, db: Session = Depends(get_db), current_user: int
                             detail=f"Project with id: {id} was not found")
     members = db.query(models.Member).filter(
         models.Member.project_id == project.id).all()
+    current_member = db.query(models.Member).filter(
+        (models.Member.user_id == current_user.id) & (models.Member.project_id == id)).first()
+    project.current_user_role = current_member.role
     project.members = []
     for member in members:
         user = db.query(models.User).filter(
