@@ -34,6 +34,20 @@ def invite_members(members: list[schemas.MemberBase], db: Session = Depends(get_
     return invitedMembers
 
 
+@router.put("/invite", status_code=status.HTTP_200_OK)
+def update_invited_members_role(member: schemas.MemberBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    member_query = db.query(models.Member).filter((models.Member.user_id == member.user_id) & (
+        models.Member.project_id == member.project_id))
+    existing_member = member_query.first()
+    # if member does not exist
+    if existing_member == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"member with id: {member.user_id} does not exist")
+    member_query.update(member.dict(), synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_200_OK)
+
+
 @router.delete("/{project_id}/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_member(user_id: int, project_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     member_query = db.query(models.Member).filter((models.Member.user_id == user_id) & (

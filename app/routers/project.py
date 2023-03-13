@@ -86,9 +86,9 @@ def get_project_detail(id: int, db: Session = Depends(get_db), current_user: int
 
 
 @router.get("/", response_model=List[schemas.ProjectOut])
-def get_projects(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+def get_projects(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), search: Optional[str] = ""):
     projects = db.query(models.Project).filter(
-        models.Project.created_by == current_user.id).filter(models.Project.title.contains(search)).limit(limit).offset(skip).all()
+        models.Project.created_by == current_user.id).filter(models.Project.title.contains(search)).all()
     return projects
 
 

@@ -63,9 +63,9 @@ def get_project_documents(task_id: int, project_id: int, db: Session = Depends(g
 
 
 @router.get("/project/{project_id}", response_model=List[schemas.Document])
-def get_documents(project_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+def get_documents(project_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), search: Optional[str] = ""):
     documents = db.query(models.Document).filter(
-        models.Document.project_id == project_id).filter(models.Document.title.contains(search)).limit(limit).offset(skip).all()
+        models.Document.project_id == project_id).filter(models.Document.title.contains(search)).all()
     for document in documents:
         document.created_by_user = db.query(models.User).filter(
             models.User.id == document.created_by).first()

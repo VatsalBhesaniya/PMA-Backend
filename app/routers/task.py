@@ -67,12 +67,12 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
 
 
 @router.get("/project/{id}", response_model=List[schemas.Task])
-def get_tasks(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+def get_tasks(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), search: Optional[str] = ""):
     # to retrieve all tasks
     # tasks = db.query(models.Task).all()
     # to retrieve all tasks of the logged in user
     tasks = db.query(models.Task).filter(
-        models.Task.project_id == id).filter(models.Task.title.contains(search)).limit(limit).offset(skip).all()
+        models.Task.project_id == id).filter(models.Task.title.contains(search)).all()
     for task in tasks:
         # fetch notes
         notes = db.query(models.TaskNote).filter(
@@ -231,10 +231,10 @@ def attach_notes(tasknotes: list[schemas.TaskNoteBase], db: Session = Depends(ge
     return new_tasknotes
 
 
-@router.delete("/attach/notes", status_code=status.HTTP_204_NO_CONTENT)
-def remove_notes(tasknote: schemas.TaskNoteBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+@router.delete("/attach/notes/{task_id}/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_notes(task_id: int, note_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     tasknote_query = db.query(models.TaskNote).filter((models.TaskNote.task_id ==
-                                                      tasknote.task_id) & (models.TaskNote.note_id == tasknote.note_id))
+                                                      task_id) & (models.TaskNote.note_id == note_id))
     attached_note = tasknote_query.first()
     # if relationship does not exist
     if attached_note == None:
@@ -249,7 +249,6 @@ def remove_notes(tasknote: schemas.TaskNoteBase, db: Session = Depends(get_db), 
 def attach_documents(taskdocuments: list[schemas.TaskDocumentBase], db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     new_taskdocuments = []
     for taskdocument in taskdocuments:
-        print(taskdocument.task_id)
         # check if task exists
         task = db.query(models.Task).filter(
             models.Task.id == taskdocument.task_id).first()
@@ -270,10 +269,10 @@ def attach_documents(taskdocuments: list[schemas.TaskDocumentBase], db: Session 
     return new_taskdocuments
 
 
-@router.delete("/attach/documents", status_code=status.HTTP_204_NO_CONTENT)
-def remove_documents(taskdocument: schemas.TaskDocumentBase, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+@router.delete("/attach/documents/{task_id}/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_documents(task_id: int, document_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     taskdocument_query = db.query(models.TaskDocument).filter((models.TaskDocument.task_id ==
-                                                              taskdocument.task_id) & (models.TaskDocument.document_id == taskdocument.document_id))
+                                                              task_id) & (models.TaskDocument.document_id == document_id))
     attached_document = taskdocument_query.first()
     # if relationship does not exist
     if attached_document == None:
