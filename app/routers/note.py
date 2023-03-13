@@ -61,9 +61,9 @@ def get_project_notes(task_id: int, project_id: int, db: Session = Depends(get_d
 
 
 @router.get("/project/{project_id}", response_model=List[schemas.Note])
-def get_notes(project_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+def get_notes(project_id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), search: Optional[str] = ""):
     notes = db.query(models.Note).filter(
-        models.Note.project_id == project_id).filter(models.Note.title.contains(search)).limit(limit).offset(skip).all()
+        models.Note.project_id == project_id).filter(models.Note.title.contains(search)).all()
     for note in notes:
         note.created_by_user = db.query(models.User).filter(
             models.User.id == note.created_by).first()
