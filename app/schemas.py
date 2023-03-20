@@ -3,8 +3,6 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
 
-# Request Models
-
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -168,9 +166,6 @@ class DocumentBase(BaseModel):
 
 class DocumentCreate(DocumentBase):
     pass
-
-# Response Models
-# https: // fastapi.tiangolo.com/tutorial/sql-databases/  # __tabbed_1_3
 
 
 class SearchUsersOut(BaseModel):

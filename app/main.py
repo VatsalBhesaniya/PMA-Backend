@@ -4,12 +4,8 @@ from .database import engine
 from .routers import task, user, auth, project, milestone, note, document, member
 from fastapi.middleware.cors import CORSMiddleware
 
-# if we use sqlalchemy without alembic then to generate tables we need below line
-# models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI()
 
-# origins = ["https://www.google.com", "https://www.youtube.com"]
 origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
