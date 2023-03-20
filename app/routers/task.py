@@ -16,11 +16,6 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Task with id: {id} was not found")
-    # # if the user is not the one who created the task
-    # if task.created_by != current_user.id:
-    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-    #                         detail=f"Not authorized to perform requested action")
-
     current_member = db.query(models.Member).filter(
         (models.Member.user_id == current_user.id) & (models.Member.project_id == task.project_id)).first()
     task.current_user_role = current_member.role
@@ -57,20 +52,11 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
         )
         task.members.append(memberOut)
 
-    return task
-    # cursor.execute("""SELECT * FROM tasks WHERE id = %s """, [str(id)])
-    # task = cursor.fetchone()
-    # if not task:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-    #                         detail=f"Task with id: {id} was not found")
-    # return {"task_detail": task}
+    return assign_task
 
 
 @router.get("/project/{id}", response_model=List[schemas.Task])
 def get_tasks(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), search: Optional[str] = ""):
-    # to retrieve all tasks
-    # tasks = db.query(models.Task).all()
-    # to retrieve all tasks of the logged in user
     tasks = db.query(models.Task).filter(
         models.Task.project_id == id).filter(models.Task.title.contains(search)).all()
     for task in tasks:
@@ -90,9 +76,6 @@ def get_tasks(id: int, db: Session = Depends(get_db), current_user: int = Depend
 
         task.members = []
     return tasks
-    # cursor.execute("""SELECT * FROM tasks""")
-    # tasks = cursor.fetchall()
-    # return {"data": tasks}
 
 
 @router.post("/create", status_code=status.HTTP_201_CREATED, response_model=schemas.Task)
@@ -119,11 +102,6 @@ def create_tasks(task: schemas.TaskCreate, db: Session = Depends(get_db), curren
     new_task.members = []
 
     return new_task
-    # cursor.execute("""INSERT INTO tasks(title, description, created_by) VALUES(%s, %s, %s) RETURNING *""",
-    #                (task.title, task.description, task.created_by))
-    # new_task = cursor.fetchone()
-    # conn.commit()
-    # return {"data": new_task}
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -134,21 +112,9 @@ def delete_task(id: int, db: Session = Depends(get_db), current_user: int = Depe
     if task == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Task with id: {id} does not exist")
-    # if the user is not the one who created the task
-    if task.created_by != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"Not authorized to perform requested action")
     task_query.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-    # cursor.execute(
-    #     """DELETE FROM tasks where id = %s RETURNING *""", [str(id)])
-    # deleted_task = cursor.fetchone()
-    # conn.commit()
-    # if deleted_task == None:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-    #                         detail=f"Task with id: {id} does not exist")
-    # return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.put("/{id}", response_model=schemas.Task)
@@ -168,15 +134,6 @@ def update_task(id: int, task: schemas.TaskCreate, db: Session = Depends(get_db)
     task_query.update(task.dict(), synchronize_session=False)
     db.commit()
     return task_query.first()
-
-    # cursor.execute(
-    #     """UPDATE tasks SET title = %s, description = %s, created_by = %s where id = %s RETURNING *""", [task.title, task.description, task.created_by, str(id)])
-    # updated_task = cursor.fetchone()
-    # conn.commit()
-    # if updated_task == None:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-    #                         detail=f"Task with id: {id} does not exist")
-    # return {'data': updated_task}
 
 
 @router.post("/assign/{id}", status_code=status.HTTP_200_OK)
@@ -236,10 +193,10 @@ def remove_notes(task_id: int, note_id: int, db: Session = Depends(get_db), curr
     tasknote_query = db.query(models.TaskNote).filter((models.TaskNote.task_id ==
                                                       task_id) & (models.TaskNote.note_id == note_id))
     attached_note = tasknote_query.first()
-    # if relationship does not exist
+    # check if note exists
     if attached_note == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Record does not exist")
+                            detail=f"Note with id: {note_id} was not found")
     tasknote_query.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -274,7 +231,7 @@ def remove_documents(task_id: int, document_id: int, db: Session = Depends(get_d
     taskdocument_query = db.query(models.TaskDocument).filter((models.TaskDocument.task_id ==
                                                               task_id) & (models.TaskDocument.document_id == document_id))
     attached_document = taskdocument_query.first()
-    # if relationship does not exist
+    # check if document exists
     if attached_document == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Record does not exist")

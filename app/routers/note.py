@@ -108,10 +108,6 @@ def update_note(id: int, note: schemas.NoteCreate, db: Session = Depends(get_db)
     if existing_note == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"note with id: {id} does not exist")
-    # # if the user is not the one who created the note
-    # if updated_note.created_by != current_user.id:
-    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-    #                         detail=f"Not authorized to perform requested action")
     note.updated_at = datetime.now(timezone.utc).isoformat()
     note.last_updated_by = current_user.id
     note_query.update(note.dict(), synchronize_session=False)

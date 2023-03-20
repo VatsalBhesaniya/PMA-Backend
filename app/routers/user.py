@@ -11,7 +11,7 @@ router = APIRouter(
 
 @router.post("/create", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # hash the password - user.password
+    # hash the password
     hashed_password = utils.hash(user.password)
     user.password = hashed_password
 
@@ -30,7 +30,7 @@ def update_password(user: schemas.UserPasswordUpdate, db: Session = Depends(get_
     if updated_user == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"User with id: {user_query.id} does not exist")
-    # hash the password - user.password
+    # hash the password
     hashed_password = utils.hash(user.password)
     user.password = hashed_password
     user_query.update(user.dict(), synchronize_session=False)

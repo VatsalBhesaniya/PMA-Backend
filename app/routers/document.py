@@ -111,10 +111,6 @@ def update_document(id: int, document: schemas.DocumentCreate, db: Session = Dep
     if existing_document == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"document with id: {id} does not exist")
-    # # if the user is not the one who created the document
-    # if existing_document.created_by != current_user.id:
-    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-    #                         detail=f"Not authorized to perform requested action")
     document.updated_at = datetime.now(timezone.utc).isoformat()
     document.last_updated_by = current_user.id
     document_query.update(document.dict(), synchronize_session=False)
