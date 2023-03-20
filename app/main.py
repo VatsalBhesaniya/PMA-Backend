@@ -23,8 +23,3 @@ app.include_router(milestone.router)
 app.include_router(task.router)
 app.include_router(note.router)
 app.include_router(document.router)
-
-
-@app.get("/")
-def root():
-    return {"message": "Hello World"}
