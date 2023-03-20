@@ -51,8 +51,7 @@ def get_task(id: int, db: Session = Depends(get_db), current_user: int = Depends
                                  last_name=user.last_name, created_at=user.created_at),
         )
         task.members.append(memberOut)
-
-    return assign_task
+    return task
 
 
 @router.get("/project/{id}", response_model=List[schemas.Task])
